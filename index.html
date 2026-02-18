@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian E-Waste Recycling Policy Simulator</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'display': ['Fraunces', 'serif'],
+            'sans': ['Manrope', 'sans-serif'],
+          },
+          colors: {
+            'indian': {
+              'saffron': '#FF6B35',
+              'green': '#2D6A4F',
+              'navy': '#1B3A4B',
+              'cream': '#FFF8F0',
+              'gold': '#D4A574',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    :root {
+      --bg-primary: #0F1419;
+      --bg-secondary: #1A2332;
+      --bg-card: rgba(26, 35, 50, 0.8);
+      --fg-primary: #F5F5F0;
+      --fg-secondary: #A8B5C4;
+      --fg-muted: #6B7A8C;
+      --accent-saffron: #FF6B35;
+      --accent-green: #40916C;
+      --accent-teal: #2D9596;
+      --accent-gold: #D4A574;
+      --border-color: rgba(168, 181, 196, 0.15);
+      --glow-saffron: rgba(255, 107, 53, 0.3);
+      --glow-green: rgba(64, 145, 108, 0.3);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg-primary);
+      color: var(--fg-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* Background Pattern */
+    .bg-pattern {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 107, 53, 0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(64, 145, 108, 0.06), transparent),
+        radial-gradient(ellipse 40% 60% at 0% 80%, rgba(45, 149, 150, 0.05), transparent);
+    }
+    
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: 
+        linear-gradient(rgba(168, 181, 196, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168, 181, 196, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    
+    /* Typography */
+    .font-display {
+      font-family: 'Fraunces', serif;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--fg-muted);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--fg-secondary);
+    }
+    
+    /* Card Styles */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      border-color: rgba(168, 181, 196, 0.25);
+      transform: translateY(-2px);
+    }
+    
+    /* Slider Styles */
+    .slider-container {
+      position: relative;
+    }
+    
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
+      outline: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    
+    input[type="range"]:hover {
+      opacity: 1;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--fg-primary);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 107, 53, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 5px rgba(255, 107, 53, 0.4);
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--fg-primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 107, 53, 0.3);
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-saffron), var(--accent-gold));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .metric-card:hover::before {
+      opacity: 1;
+    }
+    
+    .metric-card.green::before {
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
+    }
+    
+    .metric-card.teal::before {
+      background: linear-gradient(90deg, var(--accent-teal), var(--accent-saffron));
+    }
+    
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-saffron), #E85D2D);
+      color: var(--fg-primary);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.25);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg-secondary);
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(168, 181, 196, 0.1);
+      border-color: var(--fg-muted);
+      color: var(--fg-primary);
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .animate-fade-in-up {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+    
+    .animate-delay-1 { animation-delay: 0.1s; }
+    .animate-delay-2 { animation-delay: 0.2s; }
+    .animate-delay-3 { animation-delay: 0.3s; }
+    .animate-delay-4 { animation-delay: 0.4s; }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* Comparison Panel */
+    .comparison-panel {
+      position: fixed;
+      top: 0;
+      right: -450px;
+      width: 450px;
+      max-width: 90vw;
+      height: 100vh;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      z-index: 100;
+      transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    .comparison-panel.open {
+      right: 0;
+    }
+    
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 20, 25, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 99;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    /* Value Badge */
+    .value-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .value-badge.success {
+      background: rgba(64, 145, 108, 0.2);
+      color: var(--accent-green);
+    }
+    
+    .value-badge.warning {
+      background: rgba(255, 107, 53, 0.2);
+      color: var(--accent-saffron);
+    }
+    
+    .value-badge.neutral {
+      background: rgba(45, 149, 150, 0.2);
+      color: var(--accent-teal);
+    }
+    
+    /* Focus States */
+    *:focus-visible {
+      outline: 2px solid var(--accent-saffron);
+      outline-offset: 2px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .comparison-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Elements -->
+  <div class="bg-pattern"></div>
+  <div class="bg-grid"></div>
+  
+  <!-- Overlay for comparison panel -->
+  <div class="overlay" id="overlay" onclick="closeComparison()"></div>
+  
+  <!-- Main Content -->
+  <main class="relative z-10 min-h-screen px-4 py-8 md:px-8 lg:px-12">
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto mb-12 animate-fade-in-up" style="opacity: 0;">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <p class="text-sm font-medium tracking-wider uppercase mb-2" style="color: var(--accent-saffron);">
+            Policy Simulation Tool
+          </p>
+          <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight" style="color: var(--fg-primary);">
+            Indian E-Waste Recycling
+            <span class="block" style="color: var(--accent-green);">Policy Simulator</span>
+          </h1>
+        </div>
+        <div class="flex gap-3">
+          <button class="btn-secondary" onclick="resetToDefault()" aria-label="Reset all values to default">
+            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Reset
+          </button>
+          <button class="btn-primary" onclick="saveScenario()" aria-label="Save current scenario for comparison">
+            <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Compare Scenarios
+          </button>
+        </div>
+      </div>
+      <p class="mt-4 text-lg max-w-2xl" style="color: var(--fg-secondary);">
+        Model e-waste management policies across Indian cities. Adjust parameters to see real-time impact on recycling rates, revenue, and environmental outcomes.
+      </p>
+    </header>
+    
+    <!-- Main Grid -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      
+      <!-- Input Controls Panel -->
+      <section class="lg:col-span-5 animate-fade-in-up animate-delay-1" style="opacity: 0;" aria-labelledby="controls-heading">
+        <h2 id="controls-heading" class="sr-only">Policy Input Controls</h2>
+        <div class="card p-6 md:p-8">
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(255, 107, 53, 0.15);">
+              <svg class="w-5 h-5" style="color: var(--accent-saffron);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+              </svg>
+            </div>
+            <h3 class="font-display text-xl font-semibold">Policy Parameters</h3>
+          </div>
+          
+          <!-- Sliders Container -->
+          <div class="space-y-8" id="sliders-container">
+            
+            <!-- Population Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="population" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  City Population
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--fg-primary);" id="population-value">
+                  5,000,000
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="population" 
+                min="100000" 
+                max="20000000" 
+                value="5000000" 
+                step="100000"
+                aria-label="City population from 100,000 to 20,000,000"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>1L</span>
+                <span>2 Crore</span>
+              </div>
+            </div>
+            
+            <!-- Household Participation Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="participation" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  Household Participation
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--fg-primary);" id="participation-value">
+                  50%
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="participation" 
+                min="0" 
+                max="100" 
+                value="50"
+                aria-label="Household participation percentage"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+            
+            <!-- Informal Sector Efficiency Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="informal-efficiency" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  Informal Sector Efficiency
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--fg-primary);" id="informal-efficiency-value">
+                  70%
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="informal-efficiency" 
+                min="40" 
+                max="90" 
+                value="70"
+                aria-label="Informal sector efficiency"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>40%</span>
+                <span>90%</span>
+              </div>
+            </div>
+            
+            <!-- Formal Recycling Capacity Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="formal-capacity" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  Formal Recycling Capacity
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--fg-primary);" id="formal-capacity-value">
+                  30%
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="formal-capacity" 
+                min="10" 
+                max="100" 
+                value="30"
+                aria-label="Formal recycling capacity"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>10%</span>
+                <span>100%</span>
+              </div>
+            </div>
+            
+            <!-- Government Incentive Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="incentive" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  Government Incentive
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--accent-gold);" id="incentive-value">
+                  Rs 10/kg
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="incentive" 
+                min="0" 
+                max="50" 
+                value="10"
+                aria-label="Government incentive per kg"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>Rs 0</span>
+                <span>Rs 50/kg</span>
+              </div>
+            </div>
+            
+            <!-- Public Awareness Slider -->
+            <div class="slider-container">
+              <div class="flex justify-between items-baseline mb-3">
+                <label for="awareness" class="text-sm font-medium" style="color: var(--fg-secondary);">
+                  Public Awareness Level
+                </label>
+                <span class="font-display text-lg font-semibold" style="color: var(--fg-primary);" id="awareness-value">
+                  40%
+                </span>
+              </div>
+              <input 
+                type="range" 
+                id="awareness" 
+                min="0" 
+                max="100" 
+                value="40"
+                aria-label="Public awareness level"
+              >
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+      
+      <!-- Results Panel -->
+      <section class="lg:col-span-7 space-y-6 animate-fade-in-up animate-delay-2" style="opacity: 0;" aria-labelledby="results-heading">
+        <h2 id="results-heading" class="sr-only">Simulation Results</h2>
+        
+        <!-- Key Metrics Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          
+          <!-- Total Waste Card -->
+          <div class="card metric-card p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">Total E-Waste</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--fg-primary);" id="total-waste">12,000</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);">tonnes/year</p>
+          </div>
+          
+          <!-- Formal Recycling Card -->
+          <div class="card metric-card green p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">Formal Recycling</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--accent-green);" id="formal-percent">25%</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);" id="formal-kg">3,000 tonnes</p>
+          </div>
+          
+          <!-- Informal Recycling Card -->
+          <div class="card metric-card p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">Informal Sector</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--accent-saffron);" id="informal-percent">45%</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);" id="informal-kg">5,400 tonnes</p>
+          </div>
+          
+          <!-- Landfill Card -->
+          <div class="card metric-card p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">Landfilled</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--fg-secondary);" id="landfill-percent">30%</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);" id="landfill-kg">3,600 tonnes</p>
+          </div>
+          
+          <!-- Revenue Card -->
+          <div class="card metric-card teal p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">Revenue</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--accent-gold);" id="revenue">Rs 7.5 Cr</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);">annual</p>
+          </div>
+          
+          <!-- CO2 Saved Card -->
+          <div class="card metric-card green p-5">
+            <p class="text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--fg-muted);">CO2 Saved</p>
+            <p class="font-display text-2xl md:text-3xl font-bold" style="color: var(--accent-teal);" id="co2-saved">3,600</p>
+            <p class="text-sm mt-1" style="color: var(--fg-secondary);">tonnes/year</p>
+          </div>
+          
+        </div>
+        
+        <!-- Pollution Risk Score -->
+        <div class="card p-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wider mb-1" style="color: var(--fg-muted);">Environmental Pollution Risk Score</p>
+              <p class="font-display text-3xl md:text-4xl font-bold" style="color: var(--fg-primary);" id="pollution-score">62.4</p>
+              <p class="text-sm mt-1" style="color: var(--fg-secondary);">Lower is better (0-100 scale)</p>
+            </div>
+            <div class="flex-1 max-w-xs">
+              <div class="h-4 rounded-full overflow-hidden" style="background: rgba(168, 181, 196, 0.1);">
+                <div 
+                  class="h-full rounded-full transition-all duration-500"
+                  style="background: linear-gradient(90deg, var(--accent-green), var(--accent-saffron));"
+                  id="pollution-bar"
+                ></div>
+              </div>
+              <div class="flex justify-between mt-2 text-xs" style="color: var(--fg-muted);">
+                <span>Low Risk</span>
+                <span>High Risk</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chart -->
+        <div class="card p-6">
+          <h3 class="font-display text-lg font-semibold mb-4">E-Waste Flow Distribution</h3>
+          <div class="relative" style="height: 300px;">
+            <canvas id="wasteChart" aria-label="Bar chart showing e-waste distribution"></canvas>
+          </div>
+        </div>
+        
+        <!-- Summary Insights -->
+        <div class="card p-6">
+          <h3 class="font-display text-lg font-semibold mb-4">Policy Insights</h3>
+          <div id="insights-container" class="space-y-3">
+            <!-- Insights will be dynamically generated -->
+          </div>
+        </div>
+        
+      </section>
+      
+    </div>
+  </main>
+  
+  <!-- Comparison Panel -->
+  <aside class="comparison-panel" id="comparison-panel" role="dialog" aria-labelledby="comparison-title">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="font-display text-xl font-semibold" id="comparison-title">Scenario Comparison</h3>
+        <button 
+          onclick="closeComparison()" 
+          class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+          aria-label="Close comparison panel"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div id="comparison-content">
+        <p class="text-center py-8" style="color: var(--fg-muted);">
+          Save a scenario to compare with current values
+        </p>
+      </div>
+    </div>
+  </aside>
+  
+  <script>
+    // ===========================================
+    // INITIALIZATION & GLOBAL STATE
+    // ===========================================
+    
+    // Initialize all DOM element references first
+    let populationSlider = null;
+    let participationSlider = null;
+    let informalEfficiencySlider = null;
+    let formalCapacitySlider = null;
+    let incentiveSlider = null;
+    let awarenessSlider = null;
+    
+    let wasteChart = null;
+    let savedScenario = null;
+    
+    // Default values
+    const DEFAULTS = {
+      population: 5000000,
+      participation: 50,
+      informalEfficiency: 70,
+      formalCapacity: 30,
+      incentive: 10,
+      awareness: 40
+    };
+    
+    // Constants
+    const EWASTE_PER_PERSON = 2.4; // kg per year
+    const RESALE_VALUE = 25; // Rs per kg
+    const CO2_SAVED_PER_KG = 1.2; // kg CO2
+    const INFORMAL_POLLUTION_MULTIPLIER = 1.8;
+    const FORMAL_POLLUTION_MULTIPLIER = 0.5;
+    
+    // ===========================================
+    // UTILITY FUNCTIONS
+    // ===========================================
+    
+    function formatNumber(num) {
+      if (num >= 10000000) {
+        return (num / 10000000).toFixed(1) + ' Cr';
+      } else if (num >= 100000) {
+        return (num / 100000).toFixed(1) + ' L';
+      } else if (num >= 1000) {
+        return num.toLocaleString('en-IN');
+      }
+      return Math.round(num).toLocaleString('en-IN');
+    }
+    
+    function formatTonnes(kg) {
+      const tonnes = kg / 1000;
+      if (tonnes >= 1000) {
+        return (tonnes / 1000).toFixed(1) + ' lakh';
+      }
+      return Math.round(tonnes).toLocaleString('en-IN');
+    }
+    
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+    
+    // ===========================================
+    // CALCULATION ENGINE
+    // ===========================================
+    
+    function calculateResults() {
+      // Get current slider values with null checks
+      const population = populationSlider ? parseInt(populationSlider.value) : DEFAULTS.population;
+      const participation = participationSlider ? parseInt(participationSlider.value) : DEFAULTS.participation;
+      const informalEfficiency = informalEfficiencySlider ? parseInt(informalEfficiencySlider.value) : DEFAULTS.informalEfficiency;
+      const formalCapacity = formalCapacitySlider ? parseInt(formalCapacitySlider.value) : DEFAULTS.formalCapacity;
+      const incentive = incentiveSlider ? parseInt(incentiveSlider.value) : DEFAULTS.incentive;
+      const awareness = awarenessSlider ? parseInt(awarenessSlider.value) : DEFAULTS.awareness;
+      
+      // Calculate total e-waste (in kg)
+      const totalWasteKg = population * EWASTE_PER_PERSON;
+      
+      // Calculate formal collection boost from incentives and awareness
+      const incentiveBoost = incentive * 0.5; // +0.5% per Rs 1
+      const awarenessBoost = awareness * 0.3; // +0.3% per 1% awareness
+      
+      // Calculate collected waste
+      const collectedWasteKg = totalWasteKg * (participation / 100);
+      
+      // Calculate maximum formal capacity (kg)
+      const maxFormalKg = totalWasteKg * (formalCapacity / 100);
+      
+      // Calculate potential formal collection with boosts
+      const formalCollectionRate = clamp(
+        (participation + incentiveBoost + awarenessBoost) / 100,
+        0,
+        1
+      );
+      const potentialFormalKg = totalWasteKg * formalCollectionRate;
+      
+      // Actual formal recycling is limited by capacity
+      const formalKg = Math.min(potentialFormalKg, maxFormalKg, collectedWasteKg);
+      
+      // Remaining collected goes to informal
+      const remainingCollectedKg = collectedWasteKg - formalKg;
+      const informalKg = remainingCollectedKg * (informalEfficiency / 100);
+      
+      // Uncollected and informal rejection goes to landfill
+      const uncollectedKg = totalWasteKg - collectedWasteKg;
+      const informalRejectedKg = remainingCollectedKg - informalKg;
+      const landfillKg = uncollectedKg + informalRejectedKg;
+      
+      // Calculate metrics
+      const revenue = formalKg * RESALE_VALUE;
+      const co2Saved = formalKg * CO2_SAVED_PER_KG;
+      
+      // Calculate pollution index
+      const formalShare = formalKg / totalWasteKg;
+      const informalShare = informalKg / totalWasteKg;
+      const landfillShare = landfillKg / totalWasteKg;
+      
+      const pollutionIndex = 
+        (formalShare * FORMAL_POLLUTION_MULTIPLIER) +
+        (informalShare * INFORMAL_POLLUTION_MULTIPLIER) +
+        (landfillShare * 1.0);
+      
+      // Normalize to 0-100 scale
+      const pollutionScore = clamp(pollutionIndex * 50, 0, 100);
+      
+      return {
+        totalWasteKg,
+        formalKg,
+        informalKg,
+        landfillKg,
+        formalPercent: (formalKg / totalWasteKg) * 100,
+        informalPercent: (informalKg / totalWasteKg) * 100,
+        landfillPercent: (landfillKg / totalWasteKg) * 100,
+        revenue,
+        co2Saved,
+        pollutionScore,
+        incentiveBoost,
+        awarenessBoost,
+        participation
+      };
+    }
+    
+    // ===========================================
+    // UI UPDATE FUNCTIONS
+    // ===========================================
+    
+    function updateSliderDisplays() {
+      if (!populationSlider) return;
+      
+      // Update population display
+      document.getElementById('population-value').textContent = 
+        parseInt(populationSlider.value).toLocaleString('en-IN');
+      
+      // Update participation display
+      document.getElementById('participation-value').textContent = 
+        participationSlider.value + '%';
+      
+      // Update informal efficiency display
+      document.getElementById('informal-efficiency-value').textContent = 
+        informalEfficiencySlider.value + '%';
+      
+      // Update formal capacity display
+      document.getElementById('formal-capacity-value').textContent = 
+        formalCapacitySlider.value + '%';
+      
+      // Update incentive display
+      document.getElementById('incentive-value').textContent = 
+        'Rs ' + incentiveSlider.value + '/kg';
+      
+      // Update awareness display
+      document.getElementById('awareness-value').textContent = 
+        awarenessSlider.value + '%';
+    }
+    
+    function updateResults() {
+      const results = calculateResults();
+      
+      // Update metric cards
+      document.getElementById('total-waste').textContent = 
+        formatTonnes(results.totalWasteKg);
+      
+      document.getElementById('formal-percent').textContent = 
+        results.formalPercent.toFixed(1) + '%';
+      document.getElementById('formal-kg').textContent = 
+        formatTonnes(results.formalKg) + ' tonnes';
+      
+      document.getElementById('informal-percent').textContent = 
+        results.informalPercent.toFixed(1) + '%';
+      document.getElementById('informal-kg').textContent = 
+        formatTonnes(results.informalKg) + ' tonnes';
+      
+      document.getElementById('landfill-percent').textContent = 
+        results.landfillPercent.toFixed(1) + '%';
+      document.getElementById('landfill-kg').textContent = 
+        formatTonnes(results.landfillKg) + ' tonnes';
+      
+      document.getElementById('revenue').textContent = 
+        'Rs ' + formatNumber(results.revenue);
+      
+      document.getElementById('co2-saved').textContent = 
+        formatTonnes(results.co2Saved);
+      
+      document.getElementById('pollution-score').textContent = 
+        results.pollutionScore.toFixed(1);
+      
+      // Update pollution bar
+      const pollutionBar = document.getElementById('pollution-bar');
+      pollutionBar.style.width = results.pollutionScore + '%';
+      
+      // Update chart
+      updateChart(results);
+      
+      // Update insights
+      updateInsights(results);
+    }
+    
+    function updateChart(results) {
+      if (!wasteChart) return;
+      
+      const data = [
+        Math.round(results.formalKg / 1000),
+        Math.round(results.informalKg / 1000),
+        Math.round(results.landfillKg / 1000)
+      ];
+      
+      wasteChart.data.datasets[0].data = data;
+      wasteChart.update('none');
+    }
+    
+    function updateInsights(results) {
+      const container = document.getElementById('insights-container');
+      const insights = [];
+      
+      // Generate contextual insights
+      if (results.formalPercent < 20) {
+        insights.push({
+          type: 'warning',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+          text: 'Formal recycling is below optimal levels. Consider increasing government incentives.'
+        });
+      }
+      
+      if (results.informalPercent > 50) {
+        insights.push({
+          type: 'warning',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+          text: 'High informal sector activity increases pollution risk. Invest in formal infrastructure.'
+        });
+      }
+      
+      if (results.incentiveBoost > 10) {
+        insights.push({
+          type: 'success',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+          text: `Government incentives are boosting formal collection by ${results.incentiveBoost.toFixed(1)}%.`
+        });
+      }
+      
+      if (results.pollutionScore < 40) {
+        insights.push({
+          type: 'success',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+          text: 'Excellent! Low pollution risk indicates effective e-waste management.'
+        });
+      }
+      
+      if (results.awarenessBoost > 15) {
+        insights.push({
+          type: 'success',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+          text: `Public awareness programs are driving ${results.awarenessBoost.toFixed(1)}% improvement in formal collection.`
+        });
+      }
+      
+      if (results.landfillPercent > 40) {
+        insights.push({
+          type: 'warning',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+          text: 'High landfill rate detected. Increase household participation and collection infrastructure.'
+        });
+      }
+      
+      // Default insight if none generated
+      if (insights.length === 0) {
+        insights.push({
+          type: 'neutral',
+          icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+          text: 'Adjust the policy parameters above to see how they affect e-waste management outcomes.'
+        });
+      }
+      
+      // Render insights
+      container.innerHTML = insights.map(insight => `
+        <div class="flex items-start gap-3 p-3 rounded-lg" style="background: rgba(168, 181, 196, 0.05);">
+          <div class="flex-shrink-0 mt-0.5" style="color: ${insight.type === 'success' ? 'var(--accent-green)' : insight.type === 'warning' ? 'var(--accent-saffron)' : 'var(--accent-teal)'};">
+            ${insight.icon}
+          </div>
+          <p class="text-sm" style="color: var(--fg-secondary);">${insight.text}</p>
+        </div>
+      `).join('');
+    }
+    
+    // ===========================================
+    // CHART INITIALIZATION
+    // ===========================================
+    
+    function initChart() {
+      const ctx = document.getElementById('wasteChart');
+      if (!ctx) return;
+      
+      const chartCtx = ctx.getContext('2d');
+      
+      // Create gradient for bars
+      const formalGradient = chartCtx.createLinearGradient(0, 0, 0, 300);
+      formalGradient.addColorStop(0, '#40916C');
+      formalGradient.addColorStop(1, '#2D6A4F');
+      
+      const informalGradient = chartCtx.createLinearGradient(0, 0, 0, 300);
+      informalGradient.addColorStop(0, '#FF6B35');
+      informalGradient.addColorStop(1, '#E85D2D');
+      
+      const landfillGradient = chartCtx.createLinearGradient(0, 0, 0, 300);
+      landfillGradient.addColorStop(0, '#6B7A8C');
+      landfillGradient.addColorStop(1, '#4A5568');
+      
+      wasteChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Formal Recycling', 'Informal Sector', 'Landfill'],
+          datasets: [{
+            label: 'E-Waste (tonnes)',
+            data: [3000, 5400, 3600],
+            backgroundColor: [formalGradient, informalGradient, landfillGradient],
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(26, 35, 50, 0.95)',
+              titleColor: '#F5F5F0',
+              bodyColor: '#A8B5C4',
+              borderColor: 'rgba(168, 181, 196, 0.2)',
+              borderWidth: 1,
+              cornerRadius: 8,
+              padding: 12,
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y.toLocaleString('en-IN') + ' tonnes';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#A8B5C4',
+                font: {
+                  family: 'Manrope',
+                  size: 12
+                }
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(168, 181, 196, 0.1)'
+              },
+              ticks: {
+                color: '#A8B5C4',
+                font: {
+                  family: 'Manrope',
+                  size: 11
+                },
+                callback: function(value) {
+                  return value.toLocaleString('en-IN');
+                }
+              }
+            }
+          },
+          animation: {
+            duration: 500,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+    }
+    
+    // ===========================================
+    // COMPARISON FEATURE
+    // ===========================================
+    
+    function saveScenario() {
+      const results = calculateResults();
+      
+      savedScenario = {
+        inputs: {
+          population: parseInt(populationSlider.value),
+          participation: parseInt(participationSlider.value),
+          informalEfficiency: parseInt(informalEfficiencySlider.value),
+          formalCapacity: parseInt(formalCapacitySlider.value),
+          incentive: parseInt(incentiveSlider.value),
+          awareness: parseInt(awarenessSlider.value)
+        },
+        results
+      };
+      
+      updateComparisonPanel();
+      openComparison();
+    }
+    
+    function updateComparisonPanel() {
+      const container = document.getElementById('comparison-content');
+      
+      if (!savedScenario) {
+        container.innerHTML = `
+          <p class="text-center py-8" style="color: var(--fg-muted);">
+            Save a scenario to compare with current values
+          </p>
+        `;
+        return;
+      }
+      
+      const current = calculateResults();
+      const saved = savedScenario.results;
+      
+      const metrics = [
+        { label: 'Formal %', current: current.formalPercent, saved: saved.formalPercent, unit: '%', higherIsBetter: true },
+        { label: 'Informal %', current: current.informalPercent, saved: saved.informalPercent, unit: '%', higherIsBetter: false },
+        { label: 'Landfill %', current: current.landfillPercent, saved: saved.landfillPercent, unit: '%', higherIsBetter: false },
+        { label: 'Revenue', current: current.revenue / 10000000, saved: saved.revenue / 10000000, unit: ' Cr', higherIsBetter: true },
+        { label: 'CO2 Saved', current: current.co2Saved / 1000, saved: saved.co2Saved / 1000, unit: 'k kg', higherIsBetter: true },
+        { label: 'Pollution Score', current: current.pollutionScore, saved: saved.pollutionScore, unit: '', higherIsBetter: false }
+      ];
+      
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg" style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.2);">
+            <p class="text-sm font-medium mb-2" style="color: var(--accent-saffron);">Saved Scenario</p>
+            <p class="text-xs" style="color: var(--fg-muted);">
+              Pop: ${savedScenario.inputs.population.toLocaleString('en-IN')} | 
+              Incentive: Rs ${savedScenario.inputs.incentive}/kg | 
+              Awareness: ${savedScenario.inputs.awareness}%
+            </p>
+          </div>
+          
+          <div class="space-y-3">
+            ${metrics.map(m => {
+              const diff = m.current - m.saved;
+              const isPositive = m.higherIsBetter ? diff > 0 : diff < 0;
+              const diffClass = diff === 0 ? 'neutral' : (isPositive ? 'success' : 'warning');
+              const arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '–');
+              
+              return `
+                <div class="flex items-center justify-between p-3 rounded-lg" style="background: rgba(168, 181, 196, 0.05);">
+                  <span class="text-sm" style="color: var(--fg-secondary);">${m.label}</span>
+                  <div class="flex items-center gap-4">
+                    <span class="text-sm" style="color: var(--fg-muted);">${m.saved.toFixed(1)}${m.unit}</span>
+                    <span class="text-sm font-medium" style="color: var(--fg-primary);">${m.current.toFixed(1)}${m.unit}</span>
+                    <span class="value-badge ${diffClass}">${arrow} ${Math.abs(diff).toFixed(1)}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          
+          <button 
+            onclick="clearScenario()" 
+            class="w-full btn-secondary mt-4"
+            aria-label="Clear saved scenario"
+          >
+            Clear Saved Scenario
+          </button>
+        </div>
+      `;
+    }
+    
+    function openComparison() {
+      document.getElementById('comparison-panel').classList.add('open');
+      document.getElementById('overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeComparison() {
+      document.getElementById('comparison-panel').classList.remove('open');
+      document.getElementById('overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    function clearScenario() {
+      savedScenario = null;
+      updateComparisonPanel();
+    }
+    
+    // ===========================================
+    // RESET FUNCTION
+    // ===========================================
+    
+    function resetToDefault() {
+      if (!populationSlider) return;
+      
+      populationSlider.value = DEFAULTS.population;
+      participationSlider.value = DEFAULTS.participation;
+      informalEfficiencySlider.value = DEFAULTS.informalEfficiency;
+      formalCapacitySlider.value = DEFAULTS.formalCapacity;
+      incentiveSlider.value = DEFAULTS.incentive;
+      awarenessSlider.value = DEFAULTS.awareness;
+      
+      updateSliderDisplays();
+      updateResults();
+      
+      // Add subtle animation feedback
+      document.querySelectorAll('.card').forEach(card => {
+        card.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          card.style.transform = '';
+        }, 150);
+      });
+    }
+    
+    // ===========================================
+    // EVENT LISTENERS & INITIALIZATION
+    // ===========================================
+    
+    function handleSliderChange() {
+      updateSliderDisplays();
+      updateResults();
+    }
+    
+    function initSliders() {
+      // Get slider elements
+      populationSlider = document.getElementById('population');
+      participationSlider = document.getElementById('participation');
+      informalEfficiencySlider = document.getElementById('informal-efficiency');
+      formalCapacitySlider = document.getElementById('formal-capacity');
+      incentiveSlider = document.getElementById('incentive');
+      awarenessSlider = document.getElementById('awareness');
+      
+      // Add event listeners to all sliders
+      const sliders = [
+        populationSlider,
+        participationSlider,
+        informalEfficiencySlider,
+        formalCapacitySlider,
+        incentiveSlider,
+        awarenessSlider
+      ];
+      
+      sliders.forEach(slider => {
+        if (slider) {
+          slider.addEventListener('input', handleSliderChange);
+        }
+      });
+    }
+    
+    // Main initialization function
+    function init() {
+      // Initialize sliders first
+      initSliders();
+      
+      // Initialize chart
+      initChart();
+      
+      // Initial display updates
+      updateSliderDisplays();
+      updateResults();
+      
+      // Trigger entrance animations
+      setTimeout(() => {
+        document.querySelectorAll('.animate-fade-in-up').forEach(el => {
+          el.style.opacity = '1';
+        });
+      }, 100);
+    }
+    
+    // Start the application when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+    
+    // Keyboard navigation for comparison panel
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeComparison();
+      }
+    });
+  </script>
+</body>
+</html>
